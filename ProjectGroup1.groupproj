@@ -1,0 +1,36 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{F7723140-AFE6-43E0-B66D-2D5B6C2F3057}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="BusRouteMonitorProject.cbproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="BusRouteMonitorProject">
+        <MSBuild Projects="BusRouteMonitorProject.cbproj"/>
+    </Target>
+    <Target Name="BusRouteMonitorProject:Clean">
+        <MSBuild Projects="BusRouteMonitorProject.cbproj" Targets="Clean"/>
+    </Target>
+    <Target Name="BusRouteMonitorProject:Make">
+        <MSBuild Projects="BusRouteMonitorProject.cbproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="BusRouteMonitorProject"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="BusRouteMonitorProject:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="BusRouteMonitorProject:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
