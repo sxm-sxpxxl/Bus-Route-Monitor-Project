@@ -1,8 +1,8 @@
-//---------------------------------------------------------------------------
+﻿// ---------------------------------------------------------------------------
 
 #ifndef BusWorkerH
 #define BusWorkerH
-//---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 #include <vector>
 #include <math.h>
 #include <cmath>
@@ -16,7 +16,7 @@ private:
 	HANDLE hThread;
 	HANDLE hStopEvent;
 	HANDLE hUpdateEvent;
-    static HANDLE hEvent;
+	static HANDLE hEvent;
 
 	std::vector<double> xVec;
 	std::vector<double> yVec;
@@ -24,7 +24,7 @@ private:
 	double xCurrent;
 	double yCurrent;
 
-    int ID;
+	int ID;
 	int currentSiteNumber;
 	bool isForwardDirection;
 	bool isServiceable;
@@ -32,24 +32,23 @@ private:
 	double step;
 
 	double timeIntervalInMilliseconds;
-    int waitingTimeInMilliseconds;
+	int waitingTimeInMilliseconds;
 	static double timeStartNewBus;
 
-    double random(int min, int max);
-    double getDistance(double x, double y);
-    bool followTheRoute(int i, double deltaX);
+	double random(int min, int max);
+	double getDistance(double x, double y);
+	bool followTheRoute(int i, double deltaX);
 	static DWORD WINAPI ThreadProc(LPVOID pvParam);
+
 public:
 	BusWorker(int ID);
 	~BusWorker();
 
-	bool start(std::vector<double> xVec,
-			   std::vector<double> yVec,
-			   double timeInterval,
-			   int waitingTimeInMilliseconds);
+	bool start(std::vector<double>xVec, std::vector<double>yVec,
+		double timeInterval, int waitingTimeInMilliseconds);
 	bool stop();
 
-    int getID();
+	int getID();
 	double getXValue();
 	double getYValue();
 	bool isDataUpdate();
@@ -58,9 +57,7 @@ public:
 	int getTimeToArrival(int indexOfBusStop);
 	double getCurrentSpeed();
 	int getCurrentSiteNumber();
-    bool getServiceable();
+	bool getServiceable();
 };
-
-
 
 #endif

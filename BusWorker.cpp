@@ -1,9 +1,9 @@
-//---------------------------------------------------------------------------
+п»ї// ---------------------------------------------------------------------------
 
 #pragma hdrstop
 
 #include "BusWorker.h"
-//---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 #pragma package(smart_init)
 
 HANDLE BusWorker::hEvent = INVALID_HANDLE_VALUE;
@@ -24,28 +24,31 @@ BusWorker::~BusWorker() {
 	CloseHandle(hUpdateEvent);
 }
 
-bool BusWorker::start(std::vector<double> xVec, std::vector<double> yVec, double timeIntervalInMilliseconds,
-					  int waitingTimeInMilliseconds) {
-	if (hThread != INVALID_HANDLE_VALUE) return FALSE;
+bool BusWorker::start(std::vector<double>xVec, std::vector<double>yVec,
+	double timeIntervalInMilliseconds, int waitingTimeInMilliseconds) {
+	if (hThread != INVALID_HANDLE_VALUE)
+		return FALSE;
 
 	this->xVec = xVec;
 	this->yVec = yVec;
 	this->timeIntervalInMilliseconds = timeIntervalInMilliseconds;
-    this->waitingTimeInMilliseconds = waitingTimeInMilliseconds;
+	this->waitingTimeInMilliseconds = waitingTimeInMilliseconds;
 
 	ResetEvent(hStopEvent);
 	ResetEvent(hUpdateEvent);
 
 	hThread = CreateThread(NULL, NULL, ThreadProc, (LPVOID) this, NULL, NULL);
-	if (hEvent == INVALID_HANDLE_VALUE) hEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
+	if (hEvent == INVALID_HANDLE_VALUE)
+		hEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
 	return TRUE;
 }
 
 bool BusWorker::stop() {
-	if (hThread == INVALID_HANDLE_VALUE) return FALSE;
+	if (hThread == INVALID_HANDLE_VALUE)
+		return FALSE;
 
 	SetEvent(hStopEvent);
-    if (WaitForSingleObject(hThread, 100) == WAIT_TIMEOUT) {
+	if (WaitForSingleObject(hThread, 100) == WAIT_TIMEOUT) {
 		TerminateThread(hThread, 1);
 	}
 	CloseHandle(hThread);
@@ -53,26 +56,26 @@ bool BusWorker::stop() {
 
 	if (hEvent != INVALID_HANDLE_VALUE) {
 		CloseHandle(hEvent);
-        hEvent = INVALID_HANDLE_VALUE;
-    }
+		hEvent = INVALID_HANDLE_VALUE;
+	}
 
-    return TRUE;
+	return TRUE;
 }
 
 int BusWorker::getID() {
-    return ID;
+	return ID;
 }
 
 int BusWorker::getCurrentSiteNumber() {
-    return currentSiteNumber;
+	return currentSiteNumber;
 }
 
 double BusWorker::getCurrentSpeed() {
-    return speed;
+	return speed;
 }
 
 bool BusWorker::getServiceable() {
-    return isServiceable;
+	return isServiceable;
 }
 
 double BusWorker::getXValue() {
@@ -92,186 +95,212 @@ bool BusWorker::isDataUpdate() {
 }
 
 double BusWorker::random(int min, int max) {
-    srand(time(0));
+	srand(time(0));
 	return min + rand() % ((max + 1) - min);
 }
 
 DWORD WINAPI BusWorker::ThreadProc(LPVOID pvParam) {
 	BusWorker* _this = (BusWorker*) pvParam;
-	if (!_this) return 1;
+	if (!_this)
+		return 1;
 
 	WaitForSingleObject(hEvent, INFINITE);
 
-	while(true) {
+	while (true) {
 		_this->speed = _this->random(20, 100) / 100; // optional
 
-		// Определение количества начальных шагов для первого участка маршрута и вычисление самого шага по оси абсцисс
-		_this->step = _this->getDistance(_this->xVec[1], _this->yVec[1] - _this->yVec[0]) / 
-										(_this->speed * _this->timeIntervalInMilliseconds / 1000);
+		// РћРїСЂРµРґРµР»РµРЅРёРµ РєРѕР»РёС‡РµСЃС‚РІР° РЅР°С‡Р°Р»СЊРЅС‹С… С€Р°РіРѕРІ РґР»СЏ РїРµСЂРІРѕРіРѕ СѓС‡Р°СЃС‚РєР° РјР°СЂС€СЂСѓС‚Р° Рё РІС‹С‡РёСЃР»РµРЅРёРµ СЃР°РјРѕРіРѕ С€Р°РіР° РїРѕ РѕСЃРё Р°Р±СЃС†РёСЃСЃ
+		_this->step = _this->getDistance(_this->xVec[1],
+			_this->yVec[1] - _this->yVec[0]) /
+			(_this->speed * _this->timeIntervalInMilliseconds / 1000);
 		double deltaX = _this->xVec[1] / _this->step;
 
 		_this->isForwardDirection = true;
 		_this->currentSiteNumber = 1;
 
-		// Прямое прохождение маршрута, начиная со 2-го узла (2 эл-т с индексом 1),
-		// поскольку в дальнейшем происходит обращение к эл-ту с индексом i - 1. Да, знаю, надо исправить. 
-		for(int i = 1; i < _this->xVec.size(); i++) {
-			// Установка начального положения координаты абсцисс и ординат
+		// РџСЂСЏРјРѕРµ РїСЂРѕС…РѕР¶РґРµРЅРёРµ РјР°СЂС€СЂСѓС‚Р°, РЅР°С‡РёРЅР°СЏ СЃРѕ 2-РіРѕ СѓР·Р»Р° (2 СЌР»-С‚ СЃ РёРЅРґРµРєСЃРѕРј 1),
+		// РїРѕСЃРєРѕР»СЊРєСѓ РІ РґР°Р»СЊРЅРµР№С€РµРј РїСЂРѕРёСЃС…РѕРґРёС‚ РѕР±СЂР°С‰РµРЅРёРµ Рє СЌР»-С‚Сѓ СЃ РёРЅРґРµРєСЃРѕРј i - 1. Р”Р°, Р·РЅР°СЋ, РЅР°РґРѕ РёСЃРїСЂР°РІРёС‚СЊ.
+		for (int i = 1; i < _this->xVec.size(); i++) {
+			// РЈСЃС‚Р°РЅРѕРІРєР° РЅР°С‡Р°Р»СЊРЅРѕРіРѕ РїРѕР»РѕР¶РµРЅРёСЏ РєРѕРѕСЂРґРёРЅР°С‚С‹ Р°Р±СЃС†РёСЃСЃ Рё РѕСЂРґРёРЅР°С‚
 			_this->xCurrent = _this->xVec[i - 1];
 			_this->yCurrent = _this->yVec[i - 1];
 
-			// Переопределение шага по выявленному соотношению для сохранения постоянства скорости в прохождении
-			// участков маршрута разной длины. Условие служит для того, чтобы обойти итерацию на которой уже известны
-			// значения количества шагов и самого шага
-			if (i != 1) deltaX *= _this->getDistance(_this->xVec[1], _this->yVec[i - 1] - _this->yVec[i - 2]) /
-								  _this->getDistance(_this->xVec[1], _this->yVec[i] - _this->yVec[i - 1]);
-			// Осуществление итеративного прохождения участка маршрута. Возвращает TRUE в случае успешного прохождения и FALSE
-			// в случае, если работа исполняемого потока была прервана
-			if (!_this->followTheRoute(i, deltaX)) return 0;
+			// РџРµСЂРµРѕРїСЂРµРґРµР»РµРЅРёРµ С€Р°РіР° РїРѕ РІС‹СЏРІР»РµРЅРЅРѕРјСѓ СЃРѕРѕС‚РЅРѕС€РµРЅРёСЋ РґР»СЏ СЃРѕС…СЂР°РЅРµРЅРёСЏ РїРѕСЃС‚РѕСЏРЅСЃС‚РІР° СЃРєРѕСЂРѕСЃС‚Рё РІ РїСЂРѕС…РѕР¶РґРµРЅРёРё
+			// СѓС‡Р°СЃС‚РєРѕРІ РјР°СЂС€СЂСѓС‚Р° СЂР°Р·РЅРѕР№ РґР»РёРЅС‹. РЈСЃР»РѕРІРёРµ СЃР»СѓР¶РёС‚ РґР»СЏ С‚РѕРіРѕ, С‡С‚РѕР±С‹ РѕР±РѕР№С‚Рё РёС‚РµСЂР°С†РёСЋ РЅР° РєРѕС‚РѕСЂРѕР№ СѓР¶Рµ РёР·РІРµСЃС‚РЅС‹
+			// Р·РЅР°С‡РµРЅРёСЏ РєРѕР»РёС‡РµСЃС‚РІР° С€Р°РіРѕРІ Рё СЃР°РјРѕРіРѕ С€Р°РіР°
+			if (i != 1)
+				deltaX *= _this->getDistance(_this->xVec[1],
+				_this->yVec[i - 1] - _this->yVec[i - 2]) / _this->getDistance
+					(_this->xVec[1], _this->yVec[i] - _this->yVec[i - 1]);
+			// РћСЃСѓС‰РµСЃС‚РІР»РµРЅРёРµ РёС‚РµСЂР°С‚РёРІРЅРѕРіРѕ РїСЂРѕС…РѕР¶РґРµРЅРёСЏ СѓС‡Р°СЃС‚РєР° РјР°СЂС€СЂСѓС‚Р°. Р’РѕР·РІСЂР°С‰Р°РµС‚ TRUE РІ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС€РЅРѕРіРѕ РїСЂРѕС…РѕР¶РґРµРЅРёСЏ Рё FALSE
+			// РІ СЃР»СѓС‡Р°Рµ, РµСЃР»Рё СЂР°Р±РѕС‚Р° РёСЃРїРѕР»РЅСЏРµРјРѕРіРѕ РїРѕС‚РѕРєР° Р±С‹Р»Р° РїСЂРµСЂРІР°РЅР°
+			if (!_this->followTheRoute(i, deltaX))
+				return 0;
 		}
 
 		_this->isForwardDirection = false;
 
-		// Аналогичный участок кода, что и выше для обратного прохождения маршрута, также начиная со 2-го узла с конца
-		for(int i = (_this->xVec.size() - 1) - 1; i >= 0; i--) {
+		// РђРЅР°Р»РѕРіРёС‡РЅС‹Р№ СѓС‡Р°СЃС‚РѕРє РєРѕРґР°, С‡С‚Рѕ Рё РІС‹С€Рµ РґР»СЏ РѕР±СЂР°С‚РЅРѕРіРѕ РїСЂРѕС…РѕР¶РґРµРЅРёСЏ РјР°СЂС€СЂСѓС‚Р°, С‚Р°РєР¶Рµ РЅР°С‡РёРЅР°СЏ СЃРѕ 2-РіРѕ СѓР·Р»Р° СЃ РєРѕРЅС†Р°
+		for (int i = (_this->xVec.size() - 1) - 1; i >= 0; i--) {
 			_this->xCurrent = _this->xVec[i + 1];
 			_this->yCurrent = _this->yVec[i + 1];
 
-			if(i != (_this->xVec.size() - 1) - 1 ) deltaX *= _this->getDistance(_this->xVec[1], _this->yVec[i + 1] - _this->yVec[i + 2]) /
-													  _this->getDistance(_this->xVec[1], _this->yVec[i] - _this->yVec[i + 1]);
+			if (i != (_this->xVec.size() - 1) - 1)
+				deltaX *= _this->getDistance(_this->xVec[1],
+				_this->yVec[i + 1] - _this->yVec[i + 2]) / _this->getDistance
+					(_this->xVec[1], _this->yVec[i] - _this->yVec[i + 1]);
 
-			if (!_this->followTheRoute(i, -deltaX)) return 0;
+			if (!_this->followTheRoute(i, -deltaX))
+				return 0;
 		}
 	}
 }
 
 bool BusWorker::followTheRoute(int i, double deltaX) {
-	// Вычисление коэффициента угла наклона касательной
+	// Р’С‹С‡РёСЃР»РµРЅРёРµ РєРѕСЌС„С„РёС†РёРµРЅС‚Р° СѓРіР»Р° РЅР°РєР»РѕРЅР° РєР°СЃР°С‚РµР»СЊРЅРѕР№
 	double angleFactor;
-	if (isForwardDirection) angleFactor = (yVec[i] - yVec[i - 1]) / (xVec[i] - xVec[i - 1]);
-	else angleFactor = (yVec[i] - yVec[i + 1]) / (xVec[i] - xVec[i + 1]);
+	if (isForwardDirection)
+		angleFactor = (yVec[i] - yVec[i - 1]) / (xVec[i] - xVec[i - 1]);
+	else
+		angleFactor = (yVec[i] - yVec[i + 1]) / (xVec[i] - xVec[i + 1]);
 
-	// Запутанный способ универсализировать содержимое цикла
-	// посредством введения управляющей переменной состояния is
+	// Р—Р°РїСѓС‚Р°РЅРЅС‹Р№ СЃРїРѕСЃРѕР± СѓРЅРёРІРµСЂСЃР°Р»РёР·РёСЂРѕРІР°С‚СЊ СЃРѕРґРµСЂР¶РёРјРѕРµ С†РёРєР»Р°
+	// РїРѕСЃСЂРµРґСЃС‚РІРѕРј РІРІРµРґРµРЅРёСЏ СѓРїСЂР°РІР»СЏСЋС‰РµР№ РїРµСЂРµРјРµРЅРЅРѕР№ СЃРѕСЃС‚РѕСЏРЅРёСЏ is
 	bool is = true;
-    currentSiteNumber = i;
+	currentSiteNumber = i;
 
-	while(is) {
+	while (is) {
 		xCurrent += deltaX;
 		yCurrent = angleFactor * xCurrent + (yVec[i] - angleFactor * xVec[i]);
 
-		if (deltaX > 0) is = xCurrent < xVec[i];
-		else is = xCurrent > xVec[i];
+		if (deltaX > 0)
+			is = xCurrent < xVec[i];
+		else
+			is = xCurrent > xVec[i];
 
 		double time = clock();
 
-//        FILETIME createTime;
-//		FILETIME exitTime;
-//		FILETIME kernelTime;
-//		FILETIME userTime;
-//		if ( GetProcessTimes( GetCurrentProcess( ),
-//			&createTime, &exitTime, &kernelTime, &userTime ) != -1 )
-//		{
-//			SYSTEMTIME userSystemTime;
-//			if ( FileTimeToSystemTime( &userTime, &userSystemTime ) != -1 )
-//				time = (double)userSystemTime.wSecond + (double)userSystemTime.wMilliseconds / 1000;
-//		}
+		// FILETIME createTime;
+		// FILETIME exitTime;
+		// FILETIME kernelTime;
+		// FILETIME userTime;
+		// if ( GetProcessTimes( GetCurrentProcess( ),
+		// &createTime, &exitTime, &kernelTime, &userTime ) != -1 )
+		// {
+		// SYSTEMTIME userSystemTime;
+		// if ( FileTimeToSystemTime( &userTime, &userSystemTime ) != -1 )
+		// time = (double)userSystemTime.wSecond + (double)userSystemTime.wMilliseconds / 1000;
+		// }
 
 		// clock() or SYSTEMTIME?
 
 		if (time - timeStartNewBus > 5000) {
 
-            timeStartNewBus = time;
+			timeStartNewBus = time;
 			SetEvent(hEvent);
-        }
+		}
 
 		if (random(0, 100) < 3) {
 			isServiceable = false;
 		}
 
-		if (!isServiceable) { timeStartNewBus = time; SetEvent(hEvent); return FALSE; }
+		if (!isServiceable) {
+			timeStartNewBus = time;
+			SetEvent(hEvent);
+			return FALSE;
+		}
 
 		SetEvent(hUpdateEvent);
-		while(WaitForSingleObject(hUpdateEvent, 0) == WAIT_OBJECT_0 &&
-			  WaitForSingleObject(hStopEvent, 0) != WAIT_OBJECT_0) { }
+		while (WaitForSingleObject(hUpdateEvent,
+			0) == WAIT_OBJECT_0 && WaitForSingleObject(hStopEvent,
+			0) != WAIT_OBJECT_0) {
+		}
 		if (WaitForSingleObject(hStopEvent, 0) == WAIT_OBJECT_0) {
 			return FALSE;
-        }
+		}
 	}
 
 	Sleep(waitingTimeInMilliseconds);
 	return TRUE;
-}double BusWorker::getDistance(double x, double y) {	return sqrt(pow(x, 2) + pow(y, 2));
-}int BusWorker::getTimeToArrival(int indexOfBusStop) {	double distance;
+}
+
+double BusWorker::getDistance(double x, double y) {
+	return sqrt(pow(x, 2) + pow(y, 2));
+}
+
+int BusWorker::getTimeToArrival(int indexOfBusStop) {
+	double distance;
 	if (xCurrent < indexOfBusStop) {
 		if (isForwardDirection) {
-         	distance =
-				getDistance(xVec[currentSiteNumber] - xVec[currentSiteNumber - 1],
-							yVec[currentSiteNumber] - yVec[currentSiteNumber - 1])
-				-
+			distance =
+				getDistance(xVec[currentSiteNumber] -
+				xVec[currentSiteNumber - 1],
+				yVec[currentSiteNumber] - yVec[currentSiteNumber - 1]) -
 				getDistance(xCurrent - xVec[currentSiteNumber - 1],
-							yCurrent - yVec[currentSiteNumber - 1]);
-			for(int i = currentSiteNumber; i < indexOfBusStop; i++) {
-				distance += getDistance(xVec[i + 1] - xVec[i], yVec[i + 1] - yVec[i]);
+				yCurrent - yVec[currentSiteNumber - 1]);
+			for (int i = currentSiteNumber; i < indexOfBusStop; i++) {
+				distance += getDistance(xVec[i + 1] - xVec[i],
+					yVec[i + 1] - yVec[i]);
 			}
 		}
 		else {
 			distance =
-				getDistance(xVec[currentSiteNumber] - xVec[currentSiteNumber + 1],
-							yVec[currentSiteNumber] - yVec[currentSiteNumber + 1])
-				-
+				getDistance(xVec[currentSiteNumber] -
+				xVec[currentSiteNumber + 1],
+				yVec[currentSiteNumber] - yVec[currentSiteNumber + 1]) -
 				getDistance(xCurrent - xVec[currentSiteNumber + 1],
-							yCurrent - yVec[currentSiteNumber + 1]);
-						
-			for(int i = currentSiteNumber; i > 0; i--) {
+				yCurrent - yVec[currentSiteNumber + 1]);
+
+			for (int i = currentSiteNumber; i > 0; i--) {
 				distance += getDistance(xVec[i] - xVec[i - 1],
-										yVec[i] - yVec[i - 1]);
+					yVec[i] - yVec[i - 1]);
 			}
 
 			for (int i = 0; i < indexOfBusStop; i++) {
 				distance += getDistance(xVec[i + 1] - xVec[i],
-										yVec[i + 1] - yVec[i]);
-			}	
-        }
+					yVec[i + 1] - yVec[i]);
+			}
+		}
 	}
 	else {
-						
-		if (isForwardDirection) {         
+
+		if (isForwardDirection) {
 			distance =
-				getDistance(xVec[currentSiteNumber] - xVec[currentSiteNumber - 1],
-							yVec[currentSiteNumber] - yVec[currentSiteNumber - 1])
-				-
+				getDistance(xVec[currentSiteNumber] -
+				xVec[currentSiteNumber - 1],
+				yVec[currentSiteNumber] - yVec[currentSiteNumber - 1]) -
 				getDistance(xCurrent - xVec[currentSiteNumber - 1],
-							yCurrent - yVec[currentSiteNumber - 1]);
-						
-			for(int i = currentSiteNumber; i < xVec.size() - 1; i++) {
+				yCurrent - yVec[currentSiteNumber - 1]);
+
+			for (int i = currentSiteNumber; i < xVec.size() - 1; i++) {
 				distance += getDistance(xVec[i + 1] - xVec[i],
-										yVec[i + 1] - yVec[i]);
+					yVec[i + 1] - yVec[i]);
 			}
 
 			for (int i = xVec.size() - 1; i > indexOfBusStop; i--) {
 				distance += getDistance(xVec[i] - xVec[i - 1],
-										yVec[i] - yVec[i - 1]);
+					yVec[i] - yVec[i - 1]);
 			}
 		}
 		else {
 			distance =
-				getDistance(xVec[currentSiteNumber] - xVec[currentSiteNumber + 1],
-							yVec[currentSiteNumber] - yVec[currentSiteNumber + 1])
-				-
+				getDistance(xVec[currentSiteNumber] -
+				xVec[currentSiteNumber + 1],
+				yVec[currentSiteNumber] - yVec[currentSiteNumber + 1]) -
 				getDistance(xCurrent - xVec[currentSiteNumber + 1],
-							yCurrent - yVec[currentSiteNumber + 1]);
+				yCurrent - yVec[currentSiteNumber + 1]);
 
 			for (int i = currentSiteNumber; i > indexOfBusStop; i--) {
 				distance += getDistance(xVec[i] - xVec[i - 1],
-										yVec[i] - yVec[i - 1]);
+					yVec[i] - yVec[i - 1]);
 			}
 		}
-		
+
 	}
 
 	int timeToArrival = (int)(distance / speed) +
-				 		( (abs(indexOfBusStop - currentSiteNumber) - 0) * waitingTimeInMilliseconds / 1000);
+		((abs(indexOfBusStop - currentSiteNumber) - 0)
+		* waitingTimeInMilliseconds / 1000);
 
 	return timeToArrival;
 }

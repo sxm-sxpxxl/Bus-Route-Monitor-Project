@@ -173,7 +173,7 @@ object MainForm: TMainForm
     Left = 783
     Top = 127
     Width = 263
-    Height = 26
+    Height = 25
     Enabled = False
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -208,8 +208,8 @@ object MainForm: TMainForm
     object TimeLabel: TLabel
       Left = 62
       Top = 78
-      Width = 47
-      Height = 22
+      Width = 43
+      Height = 21
       Caption = '0 sec'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -221,8 +221,8 @@ object MainForm: TMainForm
     object Label2: TLabel
       Left = 67
       Top = 51
-      Width = 47
-      Height = 22
+      Width = 39
+      Height = 21
       Caption = 'Time:'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -266,7 +266,7 @@ object MainForm: TMainForm
       Left = 188
       Top = 38
       Width = 218
-      Height = 26
+      Height = 25
       Alignment = taCenter
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
